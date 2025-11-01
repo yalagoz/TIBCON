@@ -5,9 +5,26 @@ const correctPassword = "1919";
 // Bu fonksiyon, bir sayfa yüklendiğinde çağrılacak
 function checkAuth() {
     const loggedInUser = sessionStorage.getItem('loggedInUser');
-    // Eğer kullanıcı giriş yapmamışsa ve şu anki sayfa login sayfası değilse, login sayfasına yönlendir
-    if (!loggedInUser && window.location.pathname.endsWith('login.html') === false) {
+    if (!loggedInUser && !window.location.pathname.endsWith('login.html')) {
         window.location.href = 'login.html';
+    }
+}
+
+// Bu fonksiyon, sidebar'daki kullanıcı adını ve avatarı doldurur
+function populateSidebarUser() {
+    const loggedInUser = sessionStorage.getItem('loggedInUser');
+    if (loggedInUser) {
+        const userNameDisplay = document.getElementById('user-name-sidebar');
+        const userAvatar = document.getElementById('user-avatar-sidebar');
+        
+        if (userNameDisplay) {
+            userNameDisplay.textContent = loggedInUser;
+        }
+        
+        if (userAvatar) {
+            const initials = loggedInUser.split(' ').map(n => n[0]).join('');
+            userAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=random&color=fff&font-size=0.5`;
+        }
     }
 }
 
@@ -16,7 +33,6 @@ function logout() {
     sessionStorage.removeItem('loggedInUser');
     window.location.href = 'login.html';
 }
-
 
 // Eğer şu anki sayfa login.html ise, giriş formu olaylarını dinle
 if (document.getElementById('login-form')) {
@@ -28,13 +44,10 @@ if (document.getElementById('login-form')) {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
-        // Kullanıcı adı geçerli mi ve şifre doğru mu?
         if (validUsers.includes(username) && password === correctPassword) {
-            // Başarılı giriş: Kullanıcıyı sessionStorage'a kaydet ve ana sayfaya yönlendir
             sessionStorage.setItem('loggedInUser', username);
-            window.location.href = 'index.html';
+            window.location.href = 'index.html'; // İlk yönlendirme Geliştirme sayfasına olsun
         } else {
-            // Hatalı giriş
             errorMessage.textContent = 'Kullanıcı adı veya şifre hatalı!';
         }
     });
