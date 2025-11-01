@@ -126,8 +126,14 @@
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- ÖNCE GİRİŞ KONTROLÜNÜ EKLEYİN -->
     <script src="js/auth.js"></script>
+    <script>checkAuth();</script> <!-- Bu satır önemli -->
+    
+    <!-- SONRA SAYFANIN KENDİ JS DOSYASINI EKLEYİN -->
     <script src="js/siparisler.js"></script>
 </body>
 </html>
