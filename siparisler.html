@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>İş Akışı - Siparişler</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,12 +13,20 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">İş Akışı Paneli</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Geliştirme</a></li>
                     <li class="nav-item"><a class="nav-link active" href="siparisler.html">Siparişler</a></li>
                     <li class="nav-item"><a class="nav-link" href="hatalar.html">Hata & Çözüm</a></li>
                     <li class="nav-item"><a class="nav-link" href="uretim.html">Üretim</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button id="logout-button" class="btn btn-outline-light">Çıkış Yap</button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -59,7 +68,7 @@
         </div>
 
         <h3>Mevcut Siparişler</h3>
-        <table class="table table-striped table-bordered">
+        <table class="table table-striped table-bordered align-middle">
             <thead class="table-dark">
                 <tr>
                     <th>Siparişi Veren</th>
@@ -91,20 +100,28 @@
         </div>
     </div>
 
-
-    <!-- Gerekli Kütüphaneler -->
+    <!-- Gerekli Kütüphaneler ve Scriptler -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SheetJS (Excel okumak için) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="js/siparisler.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- ÖNCE GİRİŞ KONTROLÜNÜ EKLEYİN -->
+    <!-- Giriş Kontrol ve Çıkış Scriptleri (Önce yüklenmeli) -->
     <script src="js/auth.js"></script>
-    <script>checkAuth();</script> <!-- Bu satır önemli -->
+    <script>
+        // Sayfayı yetkisiz erişime karşı koru
+        checkAuth();
+
+        // Bu sayfadaki Çıkış Yap butonuna işlevsellik ekle
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutBtn = document.getElementById('logout-button');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+        });
+    </script>
     
-    <!-- SONRA SAYFANIN KENDİ JS DOSYASINI EKLEYİN -->
+    <!-- Sayfaya özel Sipariş Scripti -->
     <script src="js/siparisler.js"></script>
 </body>
 </html>
