@@ -3,87 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İş Akışı - Geliştirme</title>
+    <title>Geliştirme Planı - İş Akışı Paneli</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">İş Akışı Paneli</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link active" href="index.html">Geliştirme</a></li>
-                    <li class="nav-item"><a class="nav-link" href="siparisler.html">Siparişler</a></li>
-                    <li class="nav-item"><a class="nav-link" href="hatalar.html">Hata & Çözüm</a></li>
-                    <li class="nav-item"><a class="nav-link" href="uretim.html">Üretim</a></li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <button id="logout-button" class="btn btn-outline-light">Çıkış Yap</button>
-                    </li>
-                </ul>
-            </div>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://i.ibb.co/b3c5p2Y/tibcon-white-logo.png" alt="Tibcon Logo">
         </div>
-    </nav>
+        <ul class="sidebar-nav">
+            <li><a href="index.html" class="active"><i class="bi bi-lightning-fill"></i> Geliştirme</a></li>
+            <li><a href="siparisler.html"><i class="bi bi-cart-fill"></i> Siparişler</a></li>
+            <!-- Diğer linkler eklenebilir -->
+        </ul>
+        <div class="user-profile">
+            <div class="user-info">
+                <img id="user-avatar-sidebar" src="" alt="Avatar">
+                <div class="user-details"><span id="user-name-sidebar" class="username">Kullanıcı</span><span class="role">admin</span></div>
+            </div>
+            <button id="logout-button-sidebar" class="logout-btn"><i class="bi bi-box-arrow-right"></i></button>
+        </div>
+    </aside>
 
-    <main class="container mt-4">
-        <h1>Geliştirme Planı</h1>
-        <hr>
+    <main class="main-content">
+        <header class="content-header">
+            <div><h1>Geliştirme Planı</h1><p>Tüm geliştirme görevlerini yönetin</p></div>
+        </header>
 
-        <div class="card bg-light p-3 mb-4">
+        <div class="form-card">
             <h3>Yeni Görev Ekle</h3>
             <form id="task-form">
-                <div class="mb-3">
-                    <label for="task-name" class="form-label">Görev Açıklaması</label>
-                    <input type="text" class="form-control" id="task-name" required>
-                </div>
+                <div class="mb-3"><label for="task-name" class="form-label">Görev Açıklaması</label><input type="text" class="form-control" id="task-name" required></div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="assigned-to" class="form-label">Sorumlu Kişi</label>
-                        <!-- Değişiklik: Input yerine select (ComboBox) kullanıldı -->
                         <select class="form-select" id="assigned-to" required>
-                            <option value="Emrah Aytekin">Emrah Aytekin</option>
-                            <option value="Ufuk Sarı">Ufuk Sarı</option>
-                            <option value="Fuat Şentürk">Fuat Şentürk</option>
-                            <option value="Yusuf Alagöz">Yusuf Alagöz</option>
-                            <option value="Selim Kaya">Selim Kaya</option>
+                            <option value="Emrah Aytekin">Emrah Aytekin</option><option value="Ufuk Sarı">Ufuk Sarı</option><option value="Fuat Şentürk">Fuat Şentürk</option><option value="Yusuf Alagöz">Yusuf Alagöz</option><option value="Selim Kaya">Selim Kaya</option>
                         </select>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="start-date" class="form-label">Başlangıç Tarihi</label>
-                        <input type="date" class="form-control" id="start-date" required>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="end-date" class="form-label">Bitiş Tarihi</label>
-                        <input type="date" class="form-control" id="end-date" required>
-                    </div>
+                    <div class="col-md-4 mb-3"><label for="start-date" class="form-label">Başlangıç Tarihi</label><input type="date" class="form-control" id="start-date" required></div>
+                    <div class="col-md-4 mb-3"><label for="end-date" class="form-label">Bitiş Tarihi</label><input type="date" class="form-control" id="end-date" required></div>
                 </div>
                 <button type="submit" class="btn btn-primary">Görevi Kaydet</button>
             </form>
         </div>
         
-        <h3>Mevcut Görevler</h3>
-        <table class="table table-striped table-bordered align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th style="width: 20%;">Görev</th>
-                    <th>Sorumlu</th>
-                    <th>Başlangıç</th>
-                    <th>Bitiş</th>
-                    <th style="width: 15%;">İlerleme</th>
-                    <th>Kalan Gün</th>
-                    <th>Durum</th>
-                    <th>İşlemler</th>
-                </tr>
-            </thead>
-            <tbody id="task-list">
-                <!-- Görevler buraya JavaScript ile eklenecek -->
-            </tbody>
-        </table>
+        <div class="table-container">
+            <h3>Mevcut Görevler</h3>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr><th>Görev</th><th>Sorumlu</th><th>Oluşturan</th><th>Başlangıç</th><th>Bitiş</th><th style="min-width: 150px;">İlerleme</th><th>Kalan Gün</th><th>Durum</th><th>İşlemler</th></tr>
+                    </thead>
+                    <tbody id="task-list"></tbody>
+                </table>
+            </div>
+        </div>
     </main>
 
-    <!-- Önce auth.js sonra app.js yüklenmeli -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>
