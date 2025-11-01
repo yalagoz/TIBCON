@@ -1,19 +1,32 @@
+// Sayfa yüklendiğinde ilk olarak giriş kontrolü yap
+checkAuth();
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Gerekli HTML elementlerini seç
     const orderForm = document.getElementById('order-form');
     const orderList = document.getElementById('order-list');
     const excelFileInp = document.getElementById('excel-file');
     const excelDataContainer = document.getElementById('excel-data-container');
     const excelModal = new bootstrap.Modal(document.getElementById('excelModal'));
+    const logoutButton = document.getElementById('logout-button');
 
     let excelData = null; // Excel verisini geçici olarak tutmak için
+
+    // Çıkış Yap butonuna tıklama olayını ekle
+    if (logoutButton) {
+        logoutButton.addEventListener('click', logout);
+    }
 
     // Sayfa yüklendiğinde mevcut siparişleri yükle
     loadOrders();
 
-    // Excel dosyası seçildiğinde veriyi oku ve `excelData` değişkenine ata
+    // Excel dosyası seçildiğinde veriyi oku
     excelFileInp.addEventListener('change', (event) => {
         const file = event.target.files[0];
-        if (!file) return;
+        if (!file) {
+            excelData = null;
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -21,28 +34,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const workbook = XLSX.read(data, { type: 'array' });
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-            // Excel verisini HTML tablosuna dönüştür
             excelData = XLSX.utils.sheet_to_html(worksheet);
         };
         reader.readAsArrayBuffer(file);
     });
 
+    // Form gönderildiğinde çalışacak fonksiyon
     orderForm.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const order = {
             id: Date.now(),
             by: document.getElementById('order-by').value,
             quantity: document.getElementById('order-quantity').value,
             orderDate: document.getElementById('order-date').value,
             arrivalDate: document.getElementById('arrival-date').value,
-            excel: excelData // Okunan Excel verisini objeye ekle
+            excel: excelData
         };
-
         addOrder(order);
-        renderOrders();
+        renderOrders(); // Listeyi yenile
         orderForm.reset();
-        excelData = null; // Formu sıfırladıktan sonra geçici veriyi temizle
+        excelData = null;
     });
 
     function getOrders() {
@@ -70,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const orders = getOrders();
         orderList.innerHTML = '';
 
+        // DÜZELTME 1: "Sipariş yok" mesajı tablo yapısına uygun hale getirildi.
         if (orders.length === 0) {
             orderList.innerHTML = '<tr><td colspan="6" class="text-center">Henüz sipariş girilmemiş.</td></tr>';
             return;
@@ -77,11 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         orders.forEach(order => {
             const tr = document.createElement('tr');
+            
+            const formattedOrderDate = new Date(order.orderDate).toLocaleDateString('tr-TR');
+            const formattedArrivalDate = order.arrivalDate 
+                ? new Date(order.arrivalDate).toLocaleDateString('tr-TR') 
+                : '<span class="text-muted">Belirtilmedi</span>';
+
+            // DÜZELTME 2: Eksik olan <td>, <button> gibi HTML etiketleri eklendi.
             tr.innerHTML = `
                 <td>${order.by}</td>
                 <td>${order.quantity}</td>
-                <td>${new Date(order.orderDate).toLocaleDateString('tr-TR')}</td>
-                <td>${order.arrivalDate ? new Date(order.arrivalDate).toLocaleDate-string('tr-TR') : 'Belirtilmedi'}</td>
+                <td>${formattedOrderDate}</td>
+                <td>${formattedArrivalDate}</td>
                 <td>
                     ${order.excel ? `<button class="btn btn-info btn-sm view-details-btn" data-id="${order.id}">Detay Gör</button>` : 'Yok'}
                 </td>
@@ -93,22 +112,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Detayları Gör ve Sil butonları için event listener
+    // Detayları Gör ve Sil butonları için olay dinleyici
     orderList.addEventListener('click', (e) => {
         const target = e.target;
-        const orderId = parseInt(target.getAttribute('data-id'));
+        // Butonun kendisine veya içindeki bir elemente tıklanmış olabilir, en yakın butonu bul
+        const button = target.closest('button');
+        if (!button) return; // Eğer tıklanan yer bir buton değilse, fonksiyondan çık
+
+        const orderId = parseInt(button.getAttribute('data-id'));
         
-        if (target.classList.contains('delete-btn')) {
+        if (button.classList.contains('delete-btn')) {
             if (confirm('Bu siparişi silmek istediğinizden emin misiniz?')) {
                 deleteOrder(orderId);
             }
         }
         
-        if (target.classList.contains('view-details-btn')) {
+        if (button.classList.contains('view-details-btn')) {
             const orders = getOrders();
             const order = orders.find(o => o.id === orderId);
             if (order && order.excel) {
-                // Excel verisini al ve Bootstrap table class'ı ekle
                 excelDataContainer.innerHTML = order.excel.replace('<table', '<table class="table table-bordered"');
                 excelModal.show();
             }
