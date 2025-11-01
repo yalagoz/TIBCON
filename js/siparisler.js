@@ -1,142 +1,236 @@
-checkAuth(); // Sayfa başında giriş kontrolü
+checkAuth();
 
 document.addEventListener('DOMContentLoaded', () => {
-    populateUserInfo(); // Header'ı doldur
-
-    const orderForm = document.getElementById('order-form');
-    const orderList = document.getElementById('order-list');
-    const excelFileInp = document.getElementById('excel-file');
-    const excelDataContainer = document.getElementById('excel-data-container');
-    const excelModal = new bootstrap.Modal(document.getElementById('excelModal'));
-    const logoutButton = document.getElementById('logout-button');
-
-    if (logoutButton) logoutButton.addEventListener('click', logout);
-    
-    let excelData = null;
-    const orderStatuses = ['Bekliyor', 'Sipariş Verildi', 'Yolda', 'Tamamlandı', 'İptal Edildi'];
-
-    loadOrders();
-
-    excelFileInp.addEventListener('change', (event) => {
-        const file = event.target.files[0]; if (!file) { excelData = null; return; }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            excelData = XLSX.utils.sheet_to_html(workbook.Sheets[workbook.SheetNames[0]]);
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
-    orderForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const order = {
-            id: Date.now(),
-            quantity: document.getElementById('order-quantity').value,
-            orderDate: document.getElementById('order-date').value,
-            arrivalDate: document.getElementById('arrival-date').value,
-            excel: excelData,
-            status: 'Bekliyor', // Varsayılan durum
-            createdBy: sessionStorage.getItem('loggedInUser') // Siparişi oluşturan kullanıcı
-        };
-        addOrder(order);
-        renderOrders();
-        orderForm.reset();
-        excelData = null;
-    });
-
-    function getOrders() { return JSON.parse(localStorage.getItem('orders')) || []; }
-    function saveOrders(orders) { localStorage.setItem('orders', JSON.stringify(orders)); }
-    function addOrder(order) { const orders = getOrders(); orders.push(order); saveOrders(orders); }
-    function deleteOrder(orderId) { let orders = getOrders(); orders = orders.filter(o => o.id !== orderId); saveOrders(orders); renderOrders(); }
-
-    function updateOrderStatus(orderId, newStatus) {
-        let orders = getOrders();
-        const orderIndex = orders.findIndex(o => o.id === orderId);
-        if (orderIndex > -1) { orders[orderIndex].status = newStatus; saveOrders(orders); renderOrders(); }
+    // --- Sidebar Kullanıcı Bilgilerini Doldurma ---
+    function populateSidebarUser() {
+        const loggedInUser = sessionStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            document.getElementById('user-name-sidebar').textContent = loggedInUser;
+            const initials = loggedInUser.split(' ').map(n => n[0]).join('');
+            document.getElementById('user-avatar-sidebar').src = `https://ui-avatars.com/api/?name=${initials}&background=random&color=fff`;
+        }
     }
+    populateSidebarUser();
+    
+    // --- Element Seçimleri ---
+    const ordersContainer = document.getElementById('orders-container');
+    const orderForm = document.getElementById('order-form');
+    const newOrderModal = new bootstrap.Modal(document.getElementById('newOrderModal'));
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const cardViewBtn = document.getElementById('card-view-btn');
+    const tableViewBtn = document.getElementById('table-view-btn');
+    
+    // --- State Yönetimi ---
+    let currentView = 'card'; // 'card' or 'table'
+    let allOrders = [];
 
-    function renderOrders() {
-        const orders = getOrders();
-        orderList.innerHTML = '';
+    // --- Sipariş Fonksiyonları ---
+    function getOrders() { return JSON.parse(localStorage.getItem('siparisler_v2')) || []; }
+    function saveOrders(orders) { localStorage.setItem('siparisler_v2', JSON.stringify(orders)); }
 
-        if (orders.length === 0) {
-            orderList.innerHTML = '<tr><td colspan="9" class="text-center">Henüz sipariş girilmemiş.</td></tr>';
+    function renderOrders(ordersToRender) {
+        ordersContainer.innerHTML = '';
+        if (ordersToRender.length === 0) {
+            ordersContainer.innerHTML = `<p class="text-center text-muted">Gösterilecek sipariş bulunamadı.</p>`;
             return;
         }
 
-        orders.forEach(order => {
-            const tr = document.createElement('tr');
-            
-            // Progress Bar ve Kalan Gün Hesaplamaları
-            let progress = 0, daysRemainingText = '<span class="text-muted">Tarih Yok</span>', progressBarColor = 'bg-secondary';
-            if (order.arrivalDate) {
-                const startDate = new Date(order.orderDate);
-                const endDate = new Date(order.arrivalDate);
-                const today = new Date();
-                const totalDuration = endDate - startDate;
-                const elapsedDuration = today - startDate;
-                progress = Math.max(0, Math.min(100, (elapsedDuration / totalDuration) * 100));
-                
-                const timeRemaining = endDate - today;
-                let daysRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60 * 24));
-                daysRemainingText = `${daysRemaining} gün`;
-
-                if (daysRemaining < 0) daysRemainingText = `<span class="badge bg-danger">Süre Doldu</span>`;
-                else if (daysRemaining === 0) daysRemainingText = `<span class="badge bg-warning text-dark">Son Gün</span>`;
-
-                progressBarColor = 'bg-primary';
-                if (progress >= 100) progressBarColor = 'bg-success';
-                if (daysRemaining < 0 && order.status !== 'Tamamlandı') progressBarColor = 'bg-danger';
-            }
-             if (order.status === 'Tamamlandı') {
-                progress = 100;
-                progressBarColor = 'bg-success';
-                daysRemainingText = `<span class="badge bg-success">Bitti</span>`;
-            }
-
-
-            const formattedOrderDate = new Date(order.orderDate).toLocaleDateString('tr-TR');
-            const formattedArrivalDate = order.arrivalDate ? new Date(order.arrivalDate).toLocaleDateString('tr-TR') : '<span class="text-muted">Belirtilmedi</span>';
-            let statusOptions = orderStatuses.map(s => `<option value="${s}" ${order.status === s ? 'selected' : ''}>${s}</option>`).join('');
-
-            tr.innerHTML = `
-                <td>${order.createdBy || 'Bilinmiyor'}</td>
-                <td>${order.quantity}</td>
-                <td>${formattedOrderDate}</td>
-                <td>${formattedArrivalDate}</td>
-                <td>
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar ${progressBarColor}" style="width: ${progress}%;">${Math.round(progress)}%</div>
-                    </div>
-                </td>
-                <td class="text-center">${daysRemainingText}</td>
-                <td><select class="form-select form-select-sm status-select" data-id="${order.id}">${statusOptions}</select></td>
-                <td>${order.excel ? `<button class="btn btn-info btn-sm view-details-btn" data-id="${order.id}">Gör</button>` : 'Yok'}</td>
-                <td><button class="btn btn-danger btn-sm delete-btn" data-id="${order.id}">Sil</button></td>
-            `;
-            orderList.appendChild(tr);
-        });
+        if (currentView === 'card') {
+            ordersToRender.forEach(order => ordersContainer.innerHTML += createOrderCardHTML(order));
+        } else {
+            ordersContainer.innerHTML = createOrderTableHTML(ordersToRender);
+        }
     }
 
-    orderList.addEventListener('click', (e) => {
-        const button = e.target.closest('button');
-        if (!button) return;
-        const orderId = parseInt(button.getAttribute('data-id'));
-        if (button.classList.contains('delete-btn')) { if (confirm('Bu siparişi silmek istediğinizden emin misiniz?')) deleteOrder(orderId); }
-        if (button.classList.contains('view-details-btn')) {
-            const order = getOrders().find(o => o.id === orderId);
-            if (order && order.excel) { excelDataContainer.innerHTML = order.excel.replace('<table', '<table class="table table-bordered"'); excelModal.show(); }
+    function displayFilteredOrders() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedStatus = statusFilter.value;
+
+        let filtered = allOrders.filter(order => {
+            const matchesSearch = searchTerm === '' || 
+                                order.musteri.toLowerCase().includes(searchTerm) ||
+                                order.urun.toLowerCase().includes(searchTerm) ||
+                                `ORD-${String(order.id).padStart(5, '0')}`.toLowerCase().includes(searchTerm);
+            
+            const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
+
+            return matchesSearch && matchesStatus;
+        });
+
+        renderOrders(filtered);
+    }
+
+    // --- HTML Şablonları ---
+    function createOrderCardHTML(order) {
+        const statusClass = order.status.toLowerCase().replace(' ', '');
+        const total = (order.miktar * order.birimFiyat).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+        const teslimat = order.teslimatTarihi ? new Date(order.teslimatTarihi).toLocaleDateString('tr-TR') : 'Belirtilmedi';
+
+        return `
+        <div class="order-card">
+            <div class="order-header">
+                <span class="order-id">ORD-${String(order.id).padStart(5, '0')}</span>
+                <span class="order-status ${statusClass}">${order.status}</span>
+            </div>
+            <div class="order-details">
+                <span>Müşteri</span>
+                <p>${order.musteri}</p>
+            </div>
+            <div class="order-details">
+                <span>Ürün</span>
+                <p>${order.urun}</p>
+            </div>
+            <div class="order-pricing">
+                <span>Miktar</span>
+                <p>${order.miktar} adet</p>
+            </div>
+            <div class="order-pricing">
+                <span>Tutar</span>
+                <p>${total}</p>
+            </div>
+            <div class="order-details">
+                <span>Teslimat</span>
+                <p>${teslimat}</p>
+            </div>
+            <div class="order-actions">
+                <span>İşlemler</span>
+                <div class="actions-buttons">
+                    <button class="btn" onclick="editOrder(${order.id})"><i class="bi bi-pencil"></i> Düzenle</button>
+                    <button class="btn" onclick="deleteOrder(${order.id})"><i class="bi bi-trash"></i> Sil</button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function createOrderTableHTML(orders) {
+        let rows = orders.map(order => {
+            const total = (order.miktar * order.birimFiyat).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+            const teslimat = order.teslimatTarihi ? new Date(order.teslimatTarihi).toLocaleDateString('tr-TR') : 'Belirtilmedi';
+            return `
+            <tr>
+                <td>ORD-${String(order.id).padStart(5, '0')}</td>
+                <td>${order.musteri}</td>
+                <td>${order.urun}</td>
+                <td>${order.miktar}</td>
+                <td>${total}</td>
+                <td>${teslimat}</td>
+                <td><span class="badge order-status ${order.status.toLowerCase()}">${order.status}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-light" onclick="editOrder(${order.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${order.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        return `
+        <table class="table table-dark table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Sipariş No</th>
+                    <th>Müşteri</th>
+                    <th>Ürün</th>
+                    <th>Miktar</th>
+                    <th>Tutar</th>
+                    <th>Teslimat</th>
+                    <th>Durum</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>`;
+    }
+
+    // --- Form Yönetimi ---
+    orderForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const orderId = document.getElementById('order-id').value;
+
+        const newOrder = {
+            id: orderId ? parseInt(orderId) : Date.now(),
+            musteri: document.getElementById('musteri-adi').value,
+            urun: document.getElementById('urun').value,
+            miktar: parseFloat(document.getElementById('miktar').value),
+            birimFiyat: parseFloat(document.getElementById('birim-fiyat').value),
+            teslimatTarihi: document.getElementById('teslimat-tarihi').value,
+            notlar: document.getElementById('notlar').value,
+            dosya: document.getElementById('dosya').files[0]?.name || null,
+            status: 'Yeni', // Varsayılan durum
+            createdBy: sessionStorage.getItem('loggedInUser')
+        };
+        
+        if (orderId) { // Düzenleme
+            allOrders = allOrders.map(o => o.id === newOrder.id ? newOrder : o);
+        } else { // Ekleme
+            allOrders.push(newOrder);
         }
+
+        saveOrders(allOrders);
+        displayFilteredOrders();
+        newOrderModal.hide();
+        orderForm.reset();
     });
     
-    orderList.addEventListener('change', (e) => {
-        if (e.target.classList.contains('status-select')) {
-            const orderId = parseInt(e.target.getAttribute('data-id'));
-            const newStatus = e.target.value;
-            updateOrderStatus(orderId, newStatus);
-        }
+    // Toplam tutarı anlık hesapla
+    ['miktar', 'birim-fiyat'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            const miktar = parseFloat(document.getElementById('miktar').value) || 0;
+            const fiyat = parseFloat(document.getElementById('birim-fiyat').value) || 0;
+            document.getElementById('total-price').textContent = (miktar * fiyat).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+        });
     });
 
-    function loadOrders() { renderOrders(); }
+    // --- Düzenle ve Sil Fonksiyonları (Global scope'da olmalı) ---
+    window.editOrder = function(id) {
+        const order = allOrders.find(o => o.id === id);
+        if (order) {
+            document.getElementById('order-id').value = order.id;
+            document.getElementById('musteri-adi').value = order.musteri;
+            document.getElementById('urun').value = order.urun;
+            document.getElementById('miktar').value = order.miktar;
+            document.getElementById('birim-fiyat').value = order.birimFiyat;
+            document.getElementById('teslimat-tarihi').value = order.teslimatTarihi;
+            document.getElementById('notlar').value = order.notlar;
+            // Dosya input'unu sıfırla, düzenlemede yeniden seçilmeli
+            document.getElementById('dosya').value = '';
+            // Toplam tutarı güncelle
+            document.getElementById('total-price').textContent = (order.miktar * order.birimFiyat).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+            
+            newOrderModal.show();
+        }
+    }
+
+    window.deleteOrder = function(id) {
+        if (confirm('Bu siparişi silmek istediğinizden emin misiniz?')) {
+            allOrders = allOrders.filter(o => o.id !== id);
+            saveOrders(allOrders);
+            displayFilteredOrders();
+        }
+    }
+
+    // --- Olay Dinleyicileri (Event Listeners) ---
+    searchInput.addEventListener('input', displayFilteredOrders);
+    statusFilter.addEventListener('change', displayFilteredOrders);
+
+    cardViewBtn.addEventListener('click', () => {
+        currentView = 'card';
+        cardViewBtn.classList.add('active');
+        tableViewBtn.classList.remove('active');
+        displayFilteredOrders();
+    });
+
+    tableViewBtn.addEventListener('click', () => {
+        currentView = 'table';
+        tableViewBtn.classList.add('active');
+        cardViewBtn.classList.remove('active');
+        displayFilteredOrders();
+    });
+    
+    document.getElementById('logout-button-sidebar').addEventListener('click', logout);
+
+    // --- Başlangıç ---
+    allOrders = getOrders();
+    displayFilteredOrders();
 });
