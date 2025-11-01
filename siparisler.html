@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Form gönderildiğinde çalışacak fonksiyon
     orderForm.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const order = {
             id: Date.now(),
             by: document.getElementById('order-by').value,
@@ -51,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
             arrivalDate: document.getElementById('arrival-date').value,
             excel: excelData
         };
-
         addOrder(order);
         renderOrders(); // Listeyi yenile
         orderForm.reset();
@@ -83,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const orders = getOrders();
         orderList.innerHTML = '';
 
+        // DÜZELTME 1: "Sipariş yok" mesajı tablo yapısına uygun hale getirildi.
         if (orders.length === 0) {
             orderList.innerHTML = '<tr><td colspan="6" class="text-center">Henüz sipariş girilmemiş.</td></tr>';
             return;
@@ -91,13 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         orders.forEach(order => {
             const tr = document.createElement('tr');
             
-            // --- HATA DÜZELTMESİ BURADA ---
-            // Tarihlerin boş olup olmadığını kontrol ederek formatla
             const formattedOrderDate = new Date(order.orderDate).toLocaleDateString('tr-TR');
             const formattedArrivalDate = order.arrivalDate 
                 ? new Date(order.arrivalDate).toLocaleDateString('tr-TR') 
                 : '<span class="text-muted">Belirtilmedi</span>';
 
+            // DÜZELTME 2: Eksik olan <td>, <button> gibi HTML etiketleri eklendi.
             tr.innerHTML = `
                 <td>${order.by}</td>
                 <td>${order.quantity}</td>
@@ -117,15 +115,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Detayları Gör ve Sil butonları için olay dinleyici
     orderList.addEventListener('click', (e) => {
         const target = e.target;
-        const orderId = parseInt(target.getAttribute('data-id'));
+        // Butonun kendisine veya içindeki bir elemente tıklanmış olabilir, en yakın butonu bul
+        const button = target.closest('button');
+        if (!button) return; // Eğer tıklanan yer bir buton değilse, fonksiyondan çık
+
+        const orderId = parseInt(button.getAttribute('data-id'));
         
-        if (target.classList.contains('delete-btn')) {
+        if (button.classList.contains('delete-btn')) {
             if (confirm('Bu siparişi silmek istediğinizden emin misiniz?')) {
                 deleteOrder(orderId);
             }
         }
         
-        if (target.classList.contains('view-details-btn')) {
+        if (button.classList.contains('view-details-btn')) {
             const orders = getOrders();
             const order = orders.find(o => o.id === orderId);
             if (order && order.excel) {
