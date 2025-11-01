@@ -1,143 +1,127 @@
-// Sayfa yüklendiğinde ilk olarak giriş kontrolü yap
-checkAuth();
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İş Akışı - Siparişler</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Gerekli HTML elementlerini seç
-    const orderForm = document.getElementById('order-form');
-    const orderList = document.getElementById('order-list');
-    const excelFileInp = document.getElementById('excel-file');
-    const excelDataContainer = document.getElementById('excel-data-container');
-    const excelModal = new bootstrap.Modal(document.getElementById('excelModal'));
-    const logoutButton = document.getElementById('logout-button');
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">İş Akışı Paneli</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Geliştirme</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="siparisler.html">Siparişler</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hatalar.html">Hata & Çözüm</a></li>
+                    <li class="nav-item"><a class="nav-link" href="uretim.html">Üretim</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button id="logout-button" class="btn btn-outline-light">Çıkış Yap</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    let excelData = null; // Excel verisini geçici olarak tutmak için
+    <main class="container mt-4">
+        <h1>Malzeme Siparişleri</h1>
+        <hr>
 
-    // Çıkış Yap butonuna tıklama olayını ekle
-    if (logoutButton) {
-        logoutButton.addEventListener('click', logout);
-    }
+        <div class="card bg-light p-3 mb-4">
+            <h3>Yeni Sipariş Ekle</h3>
+            <form id="order-form">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="order-by" class="form-label">Siparişi Veren</label>
+                        <input type="text" class="form-control" id="order-by" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="order-quantity" class="form-label">Sipariş Miktarı (örn: 10 Adet)</label>
+                        <input type="text" class="form-control" id="order-quantity" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="order-date" class="form-label">Sipariş Tarihi</label>
+                        <input type="date" class="form-control" id="order-date" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="arrival-date" class="form-label">Tahmini Geliş Tarihi</label>
+                        <input type="date" class="form-control" id="arrival-date">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="excel-file" class="form-label">Sipariş Detayı (Excel Dosyası, Opsiyonel)</label>
+                    <input class="form-control" type="file" id="excel-file" accept=".xlsx, .xls">
+                </div>
+                <button type="submit" class="btn btn-primary">Siparişi Kaydet</button>
+            </form>
+        </div>
 
-    // Sayfa yüklendiğinde mevcut siparişleri yükle
-    loadOrders();
-
-    // Excel dosyası seçildiğinde veriyi oku
-    excelFileInp.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) {
-            excelData = null;
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            excelData = XLSX.utils.sheet_to_html(worksheet);
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
-    // Form gönderildiğinde çalışacak fonksiyon
-    orderForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const order = {
-            id: Date.now(),
-            by: document.getElementById('order-by').value,
-            quantity: document.getElementById('order-quantity').value,
-            orderDate: document.getElementById('order-date').value,
-            arrivalDate: document.getElementById('arrival-date').value,
-            excel: excelData
-        };
-        addOrder(order);
-        renderOrders(); // Listeyi yenile
-        orderForm.reset();
-        excelData = null;
-    });
-
-    function getOrders() {
-        return JSON.parse(localStorage.getItem('orders')) || [];
-    }
-
-    function saveOrders(orders) {
-        localStorage.setItem('orders', JSON.stringify(orders));
-    }
-
-    function addOrder(order) {
-        const orders = getOrders();
-        orders.push(order);
-        saveOrders(orders);
-    }
-
-    function deleteOrder(orderId) {
-        let orders = getOrders();
-        orders = orders.filter(order => order.id !== orderId);
-        saveOrders(orders);
-        renderOrders();
-    }
-
-    function renderOrders() {
-        const orders = getOrders();
-        orderList.innerHTML = '';
-
-        // DÜZELTME 1: "Sipariş yok" mesajı tablo yapısına uygun hale getirildi.
-        if (orders.length === 0) {
-            orderList.innerHTML = '<tr><td colspan="6" class="text-center">Henüz sipariş girilmemiş.</td></tr>';
-            return;
-        }
-
-        orders.forEach(order => {
-            const tr = document.createElement('tr');
-            
-            const formattedOrderDate = new Date(order.orderDate).toLocaleDateString('tr-TR');
-            const formattedArrivalDate = order.arrivalDate 
-                ? new Date(order.arrivalDate).toLocaleDateString('tr-TR') 
-                : '<span class="text-muted">Belirtilmedi</span>';
-
-            // DÜZELTME 2: Eksik olan <td>, <button> gibi HTML etiketleri eklendi.
-            tr.innerHTML = `
-                <td>${order.by}</td>
-                <td>${order.quantity}</td>
-                <td>${formattedOrderDate}</td>
-                <td>${formattedArrivalDate}</td>
-                <td>
-                    ${order.excel ? `<button class="btn btn-info btn-sm view-details-btn" data-id="${order.id}">Detay Gör</button>` : 'Yok'}
-                </td>
-                <td>
-                    <button class="btn btn-danger btn-sm delete-btn" data-id="${order.id}">Sil</button>
-                </td>
-            `;
-            orderList.appendChild(tr);
-        });
-    }
+        <h3>Mevcut Siparişler</h3>
+        <table class="table table-striped table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Siparişi Veren</th>
+                    <th>Miktar</th>
+                    <th>Sipariş Tarihi</th>
+                    <th>Tahmini Geliş</th>
+                    <th>Detay</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="order-list">
+                <!-- Siparişler buraya JavaScript ile eklenecek -->
+            </tbody>
+        </table>
+    </main>
     
-    // Detayları Gör ve Sil butonları için olay dinleyici
-    orderList.addEventListener('click', (e) => {
-        const target = e.target;
-        // Butonun kendisine veya içindeki bir elemente tıklanmış olabilir, en yakın butonu bul
-        const button = target.closest('button');
-        if (!button) return; // Eğer tıklanan yer bir buton değilse, fonksiyondan çık
+    <!-- Excel Detay Modalı -->
+    <div class="modal fade" id="excelModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sipariş Detayları</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="excel-data-container">
+                    <!-- Excel tablosu buraya gelecek -->
+                </div>
+            </div>
+        </div>
+    </div>
 
-        const orderId = parseInt(button.getAttribute('data-id'));
-        
-        if (button.classList.contains('delete-btn')) {
-            if (confirm('Bu siparişi silmek istediğinizden emin misiniz?')) {
-                deleteOrder(orderId);
-            }
-        }
-        
-        if (button.classList.contains('view-details-btn')) {
-            const orders = getOrders();
-            const order = orders.find(o => o.id === orderId);
-            if (order && order.excel) {
-                excelDataContainer.innerHTML = order.excel.replace('<table', '<table class="table table-bordered"');
-                excelModal.show();
-            }
-        }
-    });
+    <!-- Gerekli Kütüphaneler ve Scriptler -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SheetJS (Excel okumak için) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Giriş Kontrol ve Çıkış Scriptleri (Önce yüklenmeli) -->
+    <script src="js/auth.js"></script>
+    <script>
+        // Sayfayı yetkisiz erişime karşı koru
+        checkAuth();
 
-    function loadOrders() {
-        renderOrders();
-    }
-});
+        // Bu sayfadaki Çıkış Yap butonuna işlevsellik ekle
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutBtn = document.getElementById('logout-button');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+        });
+    </script>
+    
+    <!-- Sayfaya özel Sipariş Scripti -->
+    <script src="js/siparisler.js"></script>
+</body>
+</html>
