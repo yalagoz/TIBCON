@@ -1,3 +1,4 @@
+// Sayfa yüklendiğinde ilk olarak giriş kontrolü yap
 checkAuth();
 
 document.addEventListener('DOMContentLoaded', () => {
