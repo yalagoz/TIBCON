@@ -1,12 +1,21 @@
-// auth.js (Yeni veritabanı yapısına göre güncellenmiş tam sürüm)
+// auth.js (Hata tamamen düzeltilmiş sürüm)
 
+/**
+ * Kullanıcının giriş yapıp yapmadığını kontrol eder.
+ * Giriş yapmamışsa login sayfasına yönlendirir.
+ */
 function checkAuth() {
     const loggedInUser = sessionStorage.getItem('loggedInUser');
+    // Eğer kullanıcı giriş yapmamışsa VE login sayfasında değilse yönlendir.
     if (!loggedInUser && !window.location.pathname.endsWith('login.html')) {
         window.location.href = 'login.html';
     }
 }
 
+/**
+ * Sidebar'daki kullanıcı adı ve avatarını doldurur.
+ * Ayrıca şifre değiştirme modalını açmak için olay dinleyicisini ekler.
+ */
 function populateSidebarUser() {
     const loggedInUser = sessionStorage.getItem('loggedInUser');
     if (loggedInUser) {
@@ -16,20 +25,106 @@ function populateSidebarUser() {
         if (userNameDisplay) userNameDisplay.textContent = loggedInUser;
         
         if (userAvatar) {
-            const initials = loggedInUser.split(' ').map(n => n[0]).join('');
+            const initials = loggedInUser.split(' ').map(n => n[0]).join('') || '?';
             userAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=random&color=fff&font-size=0.5`;
+        }
+        
+        const userInfoContainer = document.getElementById('user-info-container');
+        if (userInfoContainer) {
+            userInfoContainer.addEventListener('click', () => {
+                const passwordModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
+                document.getElementById('password-change-form').reset();
+                const messageDiv = document.getElementById('password-change-message');
+                messageDiv.textContent = '';
+                messageDiv.className = 'mt-3';
+                passwordModal.show();
+            });
         }
     }
 }
 
+/**
+ * Kullanıcı oturumunu sonlandırır ve login sayfasına yönlendirir.
+ */
 function logout() {
     sessionStorage.removeItem('loggedInUser');
     window.location.href = 'login.html';
 }
 
-// --- Sadece Login Sayfasında Çalışacak Kodlar ---
+/**
+ * Şifre değiştirme formunu yönetir ve Firestore'da şifreyi günceller.
+ * @param {Event} e - Form submit olayı
+ */
+async function handleChangePassword(e) {
+    e.preventDefault();
+
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    const messageDiv = document.getElementById('password-change-message');
+    const saveBtn = document.getElementById('save-password-btn');
+
+    messageDiv.textContent = ''; // Mesajları temizle
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        messageDiv.textContent = 'Lütfen tüm alanları doldurun.';
+        messageDiv.className = 'alert alert-warning';
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        messageDiv.textContent = 'Yeni şifreler eşleşmiyor!';
+        messageDiv.className = 'alert alert-danger';
+        return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Kaydediliyor...';
+
+    const currentUser = sessionStorage.getItem('loggedInUser');
+
+    try {
+        // 'db' değişkeni firebase-config.js'den geldiği için burada doğrudan kullanılıyor.
+        const snapshot = await db.collection('Users').where('User', '==', currentUser).limit(1).get();
+
+        if (snapshot.empty) {
+            throw new Error('Mevcut kullanıcı bulunamadı.');
+        }
+
+        const userDoc = snapshot.docs[0];
+        const userData = userDoc.data();
+
+        if (userData.pass !== currentPassword) {
+            messageDiv.textContent = 'Mevcut şifreniz hatalı!';
+            messageDiv.className = 'alert alert-danger';
+            return;
+        }
+
+        await db.collection('Users').doc(userDoc.id).update({ pass: newPassword });
+
+        messageDiv.textContent = 'Şifreniz başarıyla güncellendi!';
+        messageDiv.className = 'alert alert-success';
+
+        setTimeout(() => {
+            const passwordModalEl = document.getElementById('passwordChangeModal');
+            const passwordModal = bootstrap.Modal.getInstance(passwordModalEl);
+            if (passwordModal) passwordModal.hide();
+        }, 2000);
+
+    } catch (error) {
+        console.error("Şifre değiştirme hatası:", error);
+        messageDiv.textContent = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+        messageDiv.className = 'alert alert-danger';
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Kaydet';
+    }
+}
+
+
+// --- SAYFAYA ÖZEL KODLARI ÇALIŞTIRMA ---
+
 if (document.getElementById('login-form')) {
-    const db = firebase.firestore();
+    // --- Sadece Login Sayfasında Çalışacak Kodlar ---
     const loginForm = document.getElementById('login-form');
     const usernameSelect = document.getElementById('username');
     const passwordInput = document.getElementById('password');
@@ -38,20 +133,14 @@ if (document.getElementById('login-form')) {
 
     async function populateUserDropdown() {
         try {
-            // DEĞİŞTİ: Koleksiyon adı 'Users' olarak güncellendi.
-            // DEĞİŞTİ: Sıralama alanı 'User' olarak güncellendi.
             const snapshot = await db.collection('Users').orderBy('User').get();
-            
             if (snapshot.empty) {
                 console.warn("Veritabanında 'Users' koleksiyonu boş veya bulunamadı.");
                 errorMessage.textContent = "Kullanıcı bulunamadı.";
             }
-
             snapshot.forEach(doc => {
                 const user = doc.data();
                 const option = document.createElement('option');
-                
-                // DEĞİŞTİ: Kullanıcı adı alanı 'User' olarak güncellendi.
                 option.value = user.User;
                 option.textContent = user.User;
                 usernameSelect.appendChild(option);
@@ -64,10 +153,8 @@ if (document.getElementById('login-form')) {
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const selectedUsername = usernameSelect.value;
         const enteredPassword = passwordInput.value;
-        
         errorMessage.textContent = '';
         loginButton.disabled = true;
         loginButton.textContent = 'Kontrol ediliyor...';
@@ -80,17 +167,12 @@ if (document.getElementById('login-form')) {
         }
 
         try {
-            // DEĞİŞTİ: Koleksiyon adı 'Users' ve sorgu alanı 'User' olarak güncellendi.
             const snapshot = await db.collection('Users').where('User', '==', selectedUsername).limit(1).get();
-            
             if (snapshot.empty) {
                 errorMessage.textContent = 'Kullanıcı bulunamadı!';
             } else {
                 const user = snapshot.docs[0].data();
-                
-                // DEĞİŞTİ: Şifre alanı 'pass' olarak güncellendi.
                 if (user.pass === enteredPassword) {
-                    // DEĞİŞTİ: Oturumda saklanacak kullanıcı adı 'User' alanından alınıyor.
                     sessionStorage.setItem('loggedInUser', user.User);
                     window.location.href = 'index.html';
                 } else {
@@ -107,4 +189,11 @@ if (document.getElementById('login-form')) {
     });
 
     populateUserDropdown();
+
+} else {
+    // --- Diğer Sayfalarda (index, siparisler vb.) Çalışacak Kodlar ---
+    const passwordForm = document.getElementById('password-change-form');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', handleChangePassword);
+    }
 }
