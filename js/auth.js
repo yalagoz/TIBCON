@@ -1,4 +1,4 @@
-// auth.js (Yeni veritabanı yapısına göre güncellenmiş tam sürüm)
+// js/auth.js (ŞİFRESİZ - Yeniden Yazılmış, Temiz Sürüm)
 
 function checkAuth() {
     const loggedInUser = sessionStorage.getItem('loggedInUser');
@@ -12,10 +12,8 @@ function populateSidebarUser() {
     if (loggedInUser) {
         const userNameDisplay = document.getElementById('user-name-sidebar');
         const userAvatar = document.getElementById('user-avatar-sidebar');
-        
-        if (userNameDisplay) userNameDisplay.textContent = loggedInUser;
-        
-        if (userAvatar) {
+        if(userNameDisplay) userNameDisplay.textContent = loggedInUser;
+        if(userAvatar) {
             const initials = loggedInUser.split(' ').map(n => n[0]).join('');
             userAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=random&color=fff&font-size=0.5`;
         }
@@ -27,7 +25,6 @@ function logout() {
     window.location.href = 'login.html';
 }
 
-// --- Sadece Login Sayfasında Çalışacak Kodlar ---
 if (document.getElementById('login-form')) {
     const db = firebase.firestore();
     const loginForm = document.getElementById('login-form');
@@ -38,20 +35,13 @@ if (document.getElementById('login-form')) {
 
     async function populateUserDropdown() {
         try {
-            // DEĞİŞTİ: Koleksiyon adı 'Users' olarak güncellendi.
-            // DEĞİŞTİ: Sıralama alanı 'User' olarak güncellendi.
             const snapshot = await db.collection('Users').orderBy('User').get();
-            
             if (snapshot.empty) {
-                console.warn("Veritabanında 'Users' koleksiyonu boş veya bulunamadı.");
                 errorMessage.textContent = "Kullanıcı bulunamadı.";
             }
-
             snapshot.forEach(doc => {
                 const user = doc.data();
                 const option = document.createElement('option');
-                
-                // DEĞİŞTİ: Kullanıcı adı alanı 'User' olarak güncellendi.
                 option.value = user.User;
                 option.textContent = user.User;
                 usernameSelect.appendChild(option);
@@ -80,7 +70,6 @@ if (document.getElementById('login-form')) {
         }
 
         try {
-            // DEĞİŞTİ: Koleksiyon adı 'Users' ve sorgu alanı 'User' olarak güncellendi.
             const snapshot = await db.collection('Users').where('User', '==', selectedUsername).limit(1).get();
             
             if (snapshot.empty) {
@@ -88,9 +77,8 @@ if (document.getElementById('login-form')) {
             } else {
                 const user = snapshot.docs[0].data();
                 
-                // DEĞİŞTİ: Şifre alanı 'pass' olarak güncellendi.
+                // DEĞİŞTİ: Artık sadece düz metin karşılaştırması yapılıyor.
                 if (user.pass === enteredPassword) {
-                    // DEĞİŞTİ: Oturumda saklanacak kullanıcı adı 'User' alanından alınıyor.
                     sessionStorage.setItem('loggedInUser', user.User);
                     window.location.href = 'index.html';
                 } else {

@@ -28,11 +28,19 @@
             </li>
         </ul>
         <div class="user-profile">
-            <div class="user-info">
-                <img id="user-avatar-sidebar" src="" alt="Avatar">
-                <div class="user-details"><span id="user-name-sidebar" class="username">Kullanıcı</span><span class="role">admin</span></div>
-            </div>
-            <button id="logout-button-sidebar" class="logout-btn"><i class="bi bi-box-arrow-right"></i></button>
+            <!-- YENİ: Kullanıcı bilgileri a etiketi ile sarmalandı -->
+            <a href="kullanici-yonetimi.html" class="user-info-link" style="text-decoration: none;">
+                <div class="user-info">
+                    <img id="user-avatar-sidebar" src="" alt="Avatar">
+                    <div class="user-details">
+                        <span id="user-name-sidebar" class="username">Kullanıcı</span>
+                        <span class="role">admin</span>
+                    </div>
+                </div>
+            </a>
+            <button id="logout-button-sidebar" class="logout-btn" title="Çıkış Yap">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
         </div>
     </aside>
 
@@ -80,6 +88,8 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
     <!-- YENİ: utils.js dosyası eklendi (app.js'den ÖNCE) -->
     <script src="js/utils.js"></script>
     

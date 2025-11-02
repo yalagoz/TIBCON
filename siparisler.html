@@ -34,16 +34,22 @@
 
     <!-- 3. Alt Kısım: Kullanıcı Profili -->
     <div class="user-profile">
-        <div class="user-info">
-            <img id="user-avatar-sidebar" src="" alt="Avatar">
-            <div class="user-details">
-                <span id="user-name-sidebar" class="username">Kullanıcı</span>
-                <span class="role">admin</span>
-            </div>
+        <div class="user-profile">
+            <!-- YENİ: Kullanıcı bilgileri a etiketi ile sarmalandı -->
+            <a href="kullanici-yonetimi.html" class="user-info-link" style="text-decoration: none;">
+                <div class="user-info">
+                    <img id="user-avatar-sidebar" src="" alt="Avatar">
+                    <div class="user-details">
+                        <span id="user-name-sidebar" class="username">Kullanıcı</span>
+                        <span class="role">admin</span>
+                    </div>
+                </div>
+            </a>
+            <button id="logout-button-sidebar" class="logout-btn" title="Çıkış Yap">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
         </div>
-        <button id="logout-button-sidebar" class="logout-btn" title="Çıkış Yap">
-            <i class="bi bi-box-arrow-right"></i>
-        </button>
+
     </div>
 </aside>
 
