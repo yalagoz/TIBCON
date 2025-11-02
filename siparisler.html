@@ -1,1 +1,176 @@
-c
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siparişler - İş Akışı Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- ESKİ <aside> BLOĞUNU SİLİP BUNU YAPIŞTIRIN -->
+<aside class="sidebar">
+    <!-- 1. Üst Kısım: Logo -->
+    <div class="sidebar-header">
+        <img src="images/tibcon_logo.png" alt="Tibcon Logo">
+    </div>
+
+    <!-- 2. Orta Kısım: Navigasyon Menüsü -->
+    <ul class="sidebar-nav">
+    <li>
+        <a href="index.html"> <!-- Geliştirme linki normal -->
+            <i class="bi bi-lightning-fill"></i>
+            <span>Geliştirme</span>
+        </a>
+    </li>
+    <li>
+        <a href="siparisler.html" class="active"> <!-- SİPARİŞLER LİNKİNDE 'active' CLASSI VAR -->
+            <i class="bi bi-cart-fill"></i>
+            <span>Siparişler</span>
+        </a>
+    </li>
+</ul>
+
+    <!-- 3. Alt Kısım: Kullanıcı Profili -->
+    <div class="user-profile">
+        <div class="user-info">
+            <img id="user-avatar-sidebar" src="" alt="Avatar">
+            <div class="user-details">
+                <span id="user-name-sidebar" class="username">Kullanıcı</span>
+                <span class="role">admin</span>
+            </div>
+        </div>
+        <button id="logout-button-sidebar" class="logout-btn" title="Çıkış Yap">
+            <i class="bi bi-box-arrow-right"></i>
+        </button>
+    </div>
+</aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div><h1>Siparişler</h1><p>Tüm siparişlerinizi yönetin</p></div>
+            <button class="btn btn-primary" id="new-order-btn"><i class="bi bi-plus-lg"></i> Yeni Sipariş</button>
+        </header>
+        <div class="filters">
+            <input type="text" id="search-input" class="form-control" placeholder="Müşteri veya ürüne göre ara...">
+            <select id="status-filter" class="form-select"></select>
+            <div class="btn-group" role="group">
+                <!-- Varsayılan görünüm için active class'ını JS ile yöneteceğiz -->
+                <button type="button" id="card-view-btn" class="btn btn-outline-primary" data-view="card"><i class="bi bi-grid-3x3-gap-fill"></i></button>
+                <button type="button" id="table-view-btn" class="btn btn-outline-primary active" data-view="table"><i class="bi bi-table"></i></button>
+            </div>
+        </div>
+        <!-- Siparişlerin gösterileceği alan -->
+        <div id="orders-container">
+            <div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Yükleniyor...</span></div></div>
+        </div>
+    </main>
+
+    <!-- Sipariş Ekleme/Düzenleme Modalı -->
+    <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="order-form" novalidate>
+                        <input type="hidden" id="order-doc-id">
+                        
+                        <!-- Durum Güncelleme Alanı (Sadece düzenlemede görünür) -->
+                        <div id="status-update-section" class="mb-3" style="display: none;">
+                            <label for="order-status" class="form-label fw-bold">Sipariş Durumu</label>
+                            <select id="order-status" class="form-select"></select>
+                        </div>
+                        
+                        <!-- Temel Bilgiler -->
+                        <div class="mb-3"><label for="musteri-adi" class="form-label">Müşteri Adı *</label><input type="text" class="form-control" id="musteri-adi" required></div>
+                        <div class="mb-3"><label for="urun" class="form-label">Ürün *</label><input type="text" class="form-control" id="urun" required></div>
+                        
+                        <!-- Finansal Bilgiler -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label for="miktar" class="form-label">Miktar *</label><input type="number" class="form-control" id="miktar" value="1" min="1" required></div>
+                            <div class="col-md-6 mb-3">
+                                <label for="birim-fiyat" class="form-label">Birim Fiyat *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="birim-fiyat" value="0" min="0" step="0.01" required>
+                                    <select class="form-select flex-grow-0 w-auto" id="currency"><option>₺</option><option>$</option><option>€</option></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3"><label class="form-label">Toplam Tutar</label><p id="total-price" class="fs-4 fw-bold text-primary">0,00 ₺</p></div>
+                        
+                        <!-- Tarih Bilgileri -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label for="siparis-tarihi" class="form-label">Sipariş Tarihi *</label><input type="date" class="form-control" id="siparis-tarihi" required></div>
+                            <div class="col-md-6 mb-3"><label for="teslimat-tarihi" class="form-label">Teslimat Tarihi *</label><input type="date" class="form-control" id="teslimat-tarihi" required></div>
+                        </div>
+
+                        <!-- Ek Bilgiler -->
+                        <div class="mb-3"><label for="notlar" class="form-label">Notlar</label><textarea class="form-control" id="notlar" rows="2"></textarea></div>
+                        <div class="mb-3"><label for="dosya" class="form-label">Dosya Yükle (Değiştirmek için yeni dosya seçin)</label><input type="file" class="form-control" id="dosya"><small id="current-file-info" class="form-text text-muted"></small></div>
+                        
+                        <!-- Değişiklik Geçmişi Alanı -->
+                        <div id="history-section" style="display: none;"><hr><h6>Değişiklik Geçmişi</h6><ul id="history-list" class="list-group list-group-flush" style="font-size: 0.8rem;"></ul></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <!-- SORUNUN ÇÖZÜMÜ: 'id' eklendi -->
+                    <button type="submit" form="order-form" id="save-order-btn" class="btn btn-primary">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="history-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="history-modal-title">Sipariş Değişiklik Geçmişi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="history-modal-body">
+                    <!-- Geçmiş listesi buraya JavaScript ile eklenecek -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+     <div class="modal fade" id="documentViewModal" tabindex="-1"></div>
+
+     <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detail-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detail-modal-title">Sipariş Detayı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="detail-modal-body">
+                    <!-- Detaylar buraya JavaScript ile yüklenecek -->
+                    <div class="text-center p-4"><div class="spinner-border"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="modal fade" id="documentViewModal" tabindex="-1">
+
+
+    <!-- Firebase ve diğer scriptler -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/siparisler.js"></script>
+</body>
+</html>
