@@ -1,22 +1,37 @@
+ 
+// Bu dosyanın en başında checkAuth() çağrısı olmalı
 checkAuth();
+ 
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
+ 
+
+    // Gerekli kontroller
+    checkAuth();
     populateSidebarUser();
+
+    // --- YENİ EKLENEN KISIM ---
+    // Sorumlu kişi dropdown menüsünü Firestore'dan gelen kullanıcılarla doldur.
+    populateUsersDropdown('assigned-to'); 
     document.getElementById('logout-button-sidebar').addEventListener('click', logout);
     
     const taskForm = document.getElementById('task-form');
     const taskList = document.getElementById('task-list');
-
     const statuses = ['Bekliyor', 'Devam Ediyor', 'Tamamlandı', 'İptal Edildi'];
     
-    // --- Firestore Fonksiyonları ---
-
-    // 1. Verileri GERÇEK ZAMANLI olarak dinle
+    // 'db' değişkeni firebase-config.js tarafından tanımlandığı için burada doğrudan kullanılabilir.
     db.collection('tasks').orderBy('id', 'desc').onSnapshot(snapshot => {
-        const tasks = snapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
+        const tasks = snapshot.docs.map(doc => ({
+            docId: doc.id,
+            ...doc.data()
+        }));
         renderTasks(tasks);
     });
 
+    // --- 2. Arayüzü Çizme Fonksiyonu ---
+    // Bu fonksiyon artık sadece kendisine verilen veriyi ekrana basar.
     function renderTasks(tasks) {
         taskList.innerHTML = '';
         if (tasks.length === 0) {
@@ -25,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         tasks.forEach(task => {
             const tr = document.createElement('tr');
-            // Tarihleri Firestore'dan doğru okumak için
             const startDate = new Date(task.start), endDate = new Date(task.end), today = new Date();
             let progress = 0;
             if (endDate > startDate) {
@@ -42,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (task.status === 'İptal Edildi') statusClass = 'status-iptal';
             let statusOptions = statuses.map(s => `<option value="${s}" ${task.status === s ? 'selected' : ''}>${s}</option>`).join('');
             
+            // DİKKAT: data-id yerine data-doc-id kullandık. Bu Firestore'un ID'sidir.
             tr.innerHTML = `
                 <td>${task.name}</td><td>${task.assigned}</td><td>${task.createdBy || '-'}</td>
                 <td>${startDate.toLocaleDateString('tr-TR')}</td><td>${endDate.toLocaleDateString('tr-TR')}</td>
@@ -54,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // 2. Yeni görev EKLE
+    // --- 3. Yeni Görev Ekleme ---
+    // Bu fonksiyon sadece veriyi Firebase'e gönderir. Listeyi yenileme işini dinleyici yapar.
     taskForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const newTask = {
@@ -70,25 +86,28 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(() => {
                 taskForm.reset();
             })
-            .catch(error => console.error("Hata: Görev eklenemedi: ", error));
+            .catch(error => {
+                console.error("Hata: Görev eklenemedi: ", error);
+                alert("Bir hata oluştu, görev eklenemedi. Lütfen konsolu kontrol edin.");
+            });
     });
 
+    // --- 4. Görev Silme ---
     taskList.addEventListener('click', e => {
         const deleteBtn = e.target.closest('.delete-btn');
         if (deleteBtn) {
             const docId = deleteBtn.dataset.docId;
             if (confirm('Görevi silmek istediğinizden emin misiniz?')) {
-                // 3. Görev SİL
                 db.collection('tasks').doc(docId).delete().catch(error => console.error("Hata: Görev silinemedi: ", error));
             }
         }
     });
 
+    // --- 5. Görev Durumunu Güncelleme ---
     taskList.addEventListener('change', e => {
         if (e.target.classList.contains('status-select')) {
             const docId = e.target.dataset.docId;
             const newStatus = e.target.value;
-            // 4. Görev GÜNCELLE
             db.collection('tasks').doc(docId).update({ status: newStatus }).catch(error => console.error("Hata: Görev güncellenemedi: ", error));
         }
     });

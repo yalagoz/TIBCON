@@ -1,8 +1,5 @@
-// Kullanıcı listesi ve şifre
-const validUsers = ["Emrah Aytekin", "Ufuk Sarı", "Fuat Şentürk", "Yusuf Alagöz", "Selim Kaya"];
-const correctPassword = "1919";
+// auth.js (Yeni veritabanı yapısına göre güncellenmiş tam sürüm)
 
-// Bu fonksiyon, bir sayfa yüklendiğinde çağrılacak
 function checkAuth() {
     const loggedInUser = sessionStorage.getItem('loggedInUser');
     if (!loggedInUser && !window.location.pathname.endsWith('login.html')) {
@@ -10,16 +7,13 @@ function checkAuth() {
     }
 }
 
-// Bu fonksiyon, sidebar'daki kullanıcı adını ve avatarı doldurur
 function populateSidebarUser() {
     const loggedInUser = sessionStorage.getItem('loggedInUser');
     if (loggedInUser) {
         const userNameDisplay = document.getElementById('user-name-sidebar');
         const userAvatar = document.getElementById('user-avatar-sidebar');
         
-        if (userNameDisplay) {
-            userNameDisplay.textContent = loggedInUser;
-        }
+        if (userNameDisplay) userNameDisplay.textContent = loggedInUser;
         
         if (userAvatar) {
             const initials = loggedInUser.split(' ').map(n => n[0]).join('');
@@ -28,27 +22,89 @@ function populateSidebarUser() {
     }
 }
 
-// Bu fonksiyon, çıkış yapma işlemini gerçekleştirir
 function logout() {
     sessionStorage.removeItem('loggedInUser');
     window.location.href = 'login.html';
 }
 
-// Eğer şu anki sayfa login.html ise, giriş formu olaylarını dinle
+// --- Sadece Login Sayfasında Çalışacak Kodlar ---
 if (document.getElementById('login-form')) {
+    const db = firebase.firestore();
     const loginForm = document.getElementById('login-form');
+    const usernameSelect = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
     const errorMessage = document.getElementById('error-message');
+    const loginButton = document.getElementById('login-btn');
 
-    loginForm.addEventListener('submit', (e) => {
+    async function populateUserDropdown() {
+        try {
+            // DEĞİŞTİ: Koleksiyon adı 'Users' olarak güncellendi.
+            // DEĞİŞTİ: Sıralama alanı 'User' olarak güncellendi.
+            const snapshot = await db.collection('Users').orderBy('User').get();
+            
+            if (snapshot.empty) {
+                console.warn("Veritabanında 'Users' koleksiyonu boş veya bulunamadı.");
+                errorMessage.textContent = "Kullanıcı bulunamadı.";
+            }
+
+            snapshot.forEach(doc => {
+                const user = doc.data();
+                const option = document.createElement('option');
+                
+                // DEĞİŞTİ: Kullanıcı adı alanı 'User' olarak güncellendi.
+                option.value = user.User;
+                option.textContent = user.User;
+                usernameSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Kullanıcılar yüklenirken hata oluştu:", error);
+            errorMessage.textContent = "Kullanıcı listesi yüklenemedi.";
+        }
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+        
+        const selectedUsername = usernameSelect.value;
+        const enteredPassword = passwordInput.value;
+        
+        errorMessage.textContent = '';
+        loginButton.disabled = true;
+        loginButton.textContent = 'Kontrol ediliyor...';
 
-        if (validUsers.includes(username) && password === correctPassword) {
-            sessionStorage.setItem('loggedInUser', username);
-            window.location.href = 'index.html'; // İlk yönlendirme Geliştirme sayfasına olsun
-        } else {
-            errorMessage.textContent = 'Kullanıcı adı veya şifre hatalı!';
+        if (!selectedUsername) {
+            errorMessage.textContent = 'Lütfen bir kullanıcı seçin!';
+            loginButton.disabled = false;
+            loginButton.textContent = 'Giriş Yap';
+            return;
+        }
+
+        try {
+            // DEĞİŞTİ: Koleksiyon adı 'Users' ve sorgu alanı 'User' olarak güncellendi.
+            const snapshot = await db.collection('Users').where('User', '==', selectedUsername).limit(1).get();
+            
+            if (snapshot.empty) {
+                errorMessage.textContent = 'Kullanıcı bulunamadı!';
+            } else {
+                const user = snapshot.docs[0].data();
+                
+                // DEĞİŞTİ: Şifre alanı 'pass' olarak güncellendi.
+                if (user.pass === enteredPassword) {
+                    // DEĞİŞTİ: Oturumda saklanacak kullanıcı adı 'User' alanından alınıyor.
+                    sessionStorage.setItem('loggedInUser', user.User);
+                    window.location.href = 'index.html';
+                } else {
+                    errorMessage.textContent = 'Şifre hatalı!';
+                }
+            }
+        } catch (error) {
+            console.error("Giriş sırasında hata:", error);
+            errorMessage.textContent = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = 'Giriş Yap';
         }
     });
+
+    populateUserDropdown();
 }

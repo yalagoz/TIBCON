@@ -4,60 +4,137 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giriş Yap - İş Akışı Paneli</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
-        :root { --dark-bg: #1a1c2c; --light-text: #a0a0c0; --white-text: #ffffff; --primary-blue: #3a76f7; --gradient-blue: linear-gradient(90deg, #3a76f7, #6c9eff); }
-        body { font-family: 'Poppins', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background-color: var(--dark-bg); background-image: radial-gradient(circle at 10% 20%, rgba(90, 92, 106, 0.3) 0%, rgba(32, 45, 58, 0.3) 80%); color: var(--light-text); }
-        .login-container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
-        .logo-box { margin-bottom: 1.5rem; }
-        .logo-box img { max-width: 200px; }
-        .login-container .subtitle { margin-bottom: 2rem; font-size: 1rem; }
-        .form-container { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 30px; text-align: left; }
-        .input-group { margin-bottom: 1.25rem; }
-        .input-group label { display: block; font-size: 0.9rem; margin-bottom: 8px; }
-        .input-field { position: relative; }
-        .input-field i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--light-text); pointer-events: none; }
-        .input-field input, .input-field select { width: 100%; padding: 12px 15px 12px 45px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: var(--white-text); font-size: 1rem; font-family: 'Poppins', sans-serif; outline: none; transition: border-color 0.3s; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-        .input-field input:focus, .input-field select:focus { border-color: var(--primary-blue); }
-        .login-button { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--gradient-blue); color: var(--white-text); font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; margin-top: 10px; }
-        #error-message { color: #ff5c5c; margin-top: 15px; text-align: center; font-weight: 500; min-height: 1.2em; }
+        :root {
+            /* YENİ TEMA RENGİ: Progress bardaki mavi */
+            --theme-blue: #3647e0; 
+            --dark-text: #333;
+            --light-text: #777;
+            --light-grey: #f0f4f8;
+            --white: #ffffff;
+            --danger: #ff5c5c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--light-grey);
+        }
+
+        .container {
+            display: flex;
+            width: 950px;
+            height: 600px;
+            background-color: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        /* --- Karşılama Paneli (Sağ Taraf) --- */
+        .welcome-panel {
+            /* DEĞİŞTİ: Gradyan yerine solid mavi */
+            background-color: var(--theme-blue);
+            color: var(--white);
+            text-align: center;
+        }
+
+        .welcome-panel h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .welcome-panel p { font-size: 1rem; line-height: 1.6; max-width: 300px; margin-bottom: 2rem; }
+        .ghost-button { background-color: transparent; border: 2px solid var(--white); color: var(--white); padding: 12px 30px; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .ghost-button:hover { background-color: var(--white); color: var(--theme-blue); }
+
+        /* --- Form Paneli (Sol Taraf) --- */
+        .form-panel { align-items: stretch; text-align: center; }
+        .logo-box { margin-bottom: 20px; }
+        .logo-box img { max-width: 180px; }
+        .form-panel h1 { color: var(--dark-text); font-size: 2rem; margin-bottom: 10px; }
+        .form-panel .subtitle { color: var(--light-text); margin-bottom: 30px; }
+        #login-form { width: 100%; max-width: 350px; margin: 0 auto; text-align: left; }
+        .input-group { position: relative; margin-bottom: 1.25rem; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--light-text); }
+        .input-group select, .input-group input { width: 100%; padding: 12px 15px 12px 45px; background-color: var(--light-grey); border: none; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1rem; color: var(--dark-text); outline: none; transition: box-shadow 0.3s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        .input-group select { cursor: pointer; }
+        .input-group select:focus, .input-group input:focus { box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.3); }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            /* DEĞİŞTİ: Gradyan yerine solid mavi */
+            background-color: var(--theme-blue);
+            color: var(--white);
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-top: 10px;
+        }
+        .login-button:hover { transform: scale(1.02); }
+        .login-button:disabled { background: #aaa; cursor: not-allowed; }
+        #error-message { color: var(--danger); margin-top: 15px; text-align: center; font-weight: 500; min-height: 1.2em; }
+
+        @media (max-width: 950px) {
+            .container { flex-direction: column; width: 90%; max-width: 450px; height: auto; margin: 20px 0; }
+            .welcome-panel { display: none; }
+            .form-panel { padding: 30px; }
+        }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo-box">
-            <img src="https://i.ibb.co/b3c5p2Y/tibcon-white-logo.png" alt="TIBON Logo">
-        </div>
-        <p class="subtitle">İş Akışı Yönetim Paneli</p>
-        <div class="form-container">
+    <div class="container">
+        <!-- Sol Panel: Giriş Formu -->
+        <div class="panel form-panel">
+            <div class="logo-box">
+                <img src="images/tibcon_logo.png" alt="TIBON Logo">
+            </div>
+            <h1>Giriş Yap</h1>
+            <p class="subtitle">İş Akışı Yönetim Paneli</p>
+
             <form id="login-form" novalidate>
                 <div class="input-group">
-                    <label for="username">Kullanıcı Adı</label>
-                    <div class="input-field">
-                        <i class="bi bi-person"></i>
-                        <select id="username" required>
-                            <option value="" disabled selected>Kullanıcı seçin...</option>
-                            <option value="Emrah Aytekin">Emrah Aytekin</option>
-                            <option value="Ufuk Sarı">Ufuk Sarı</option>
-                            <option value="Fuat Şentürk">Fuat Şentürk</option>
-                            <option value="Yusuf Alagöz">Yusuf Alagöz</option>
-                            <option value="Selim Kaya">Selim Kaya</option>
-                        </select>
-                    </div>
+                    <i class="bi bi-person"></i>
+                    <select id="username" required>
+                        <option value="" disabled selected>Kullanıcı seçin...</option>
+                    </select>
                 </div>
                 <div class="input-group">
-                    <label for="password">Şifre</label>
-                    <div class="input-field">
-                        <i class="bi bi-lock"></i>
-                        <input type="password" id="password" placeholder="Şifrenizi girin" required>
-                    </div>
+                    <i class="bi bi-lock"></i>
+                    <input type="password" id="password" placeholder="Şifrenizi girin" required>
                 </div>
-                <button type="submit" class="login-button">Giriş Yap</button>
+                <button type="submit" class="login-button" id="login-btn">Giriş Yap</button>
                 <div id="error-message"></div>
             </form>
         </div>
+
+        <!-- Sağ Panel: Karşılama Mesajı -->
+        <div class="panel welcome-panel">
+            <h2>Merhaba, Değerli Üye!</h2>
+            <p>Sitenin tüm özelliklerini kullanmak için lütfen giriş yapınız.</p>
+            <button class="ghost-button">Daha Fazla Bilgi</button>
+        </div>
     </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
 </body>
 </html>

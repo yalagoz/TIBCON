@@ -1,135 +1,135 @@
-/* Google Fonts */
+/* =============================================== */
+/* --- GENEL AYARLAR VE DEĞİŞKENLER --- */
+/* =============================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --bg-light: #F4F7FC;
-    --bg-content: #FFFFFF;
-    --primary-blue: #4A69FF;
-    --text-dark: #272B41;
+    /* Ana Tema Rengi (Yeni Sipariş Butonu Mavisi) */
+    --theme-blue: #4A69FF; 
+
+    /* Renk Paleti */
+    --primary-green: #26C685;
+    --primary-yellow: #ffc107;
+    --primary-red: #EA4335;
+    --primary-grey: #6c757d;
+
+    /* Tema Renkleri */
+    --bg-main: #f0f4f8;
+    --bg-content: #ffffff;
+    --text-dark: #333333;
     --text-muted: #8A92A6;
-    --border-color: #E9ECEF;
+    --border-color: #e9ecef;
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    /* Sidebar Renkleri */
+    --sidebar-text: #e0e0ff;
+    --sidebar-text-hover: #ffffff;
+    --sidebar-active-text: #ffffff;
+    --sidebar-active-bg: rgba(255, 255, 255, 0.15);
+    --sidebar-border: rgba(255, 255, 255, 0.2);
 }
 
 body {
     font-family: 'Inter', sans-serif;
-    margin: 0;
-    background-color: var(--bg-light);
+    background-color: var(--bg-main);
     color: var(--text-dark);
-    display: flex;
-    min-height: 100vh;
 }
 
-/* --- Ana Layout: Sidebar ve Main Content --- */
+/* =============================================== */
+/* --- SIDEBAR --- */
+/* =============================================== */
 .sidebar {
-    width: 260px;
-    background-color: #1C1D2A; /* Sidebar'ı koyu tutmak daha şık duruyor */
-    color: var(--bg-light);
-    padding: 1.5rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    /* DEĞİŞTİ: Arka plan rengi --theme-blue olarak ayarlandı */
+    background-color: var(--theme-blue);
+    color: var(--sidebar-text);
+    padding: 25px;
     display: flex;
     flex-direction: column;
-    position: fixed;
-    height: 100%;
+    box-shadow: 5px 0px 25px rgba(0, 0, 0, 0.1);
+    transition: width 0.3s ease;
     z-index: 1000;
 }
 
-.main-content {
-    margin-left: 260px;
-    flex-grow: 1;
-    padding: 2rem;
+.sidebar-header {
+    text-align: center;
+    padding-bottom: 25px;
+    margin-bottom: 25px;
 }
 
-/* Bu genel stil, renklerin daha belirgin olmasını sağlar */
-.status-select {
-    font-weight: 500;
+.sidebar-header img {
+    max-width: 200px; 
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
 }
 
-/* Bekliyor -> Pembe/Mor */
-.form-select.status-bekliyor {
-    background-color: rgba(216, 137, 255, 0.15);
-    color: #a347e0;
-    border-color: rgba(216, 137, 255, 0.4);
-}
+.sidebar-nav { list-style: none; padding: 0; margin: 0; }
+.sidebar-nav li { margin-bottom: 10px; }
+.sidebar-nav a { display: flex; align-items: center; padding: 14px 20px; border-radius: 10px; text-decoration: none; color: var(--sidebar-text); font-weight: 500; font-size: 1.05rem; transition: all 0.3s ease; border: 1px solid transparent; }
+.sidebar-nav a:hover { background-color: var(--sidebar-active-bg); color: var(--sidebar-text-hover); transform: translateX(5px); }
+.sidebar-nav a.active { background-color: var(--sidebar-active-bg); color: var(--sidebar-active-text); font-weight: 700; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); }
+.sidebar-nav a i { font-size: 1.3rem; margin-right: 18px; width: 22px; }
 
-/* Devam Ediyor -> Mavi */
-.form-select.status-devam-ediyor {
-    background-color: rgba(74, 105, 255, 0.15);
-    color: #4A69FF;
-    border-color: rgba(74, 105, 255, 0.4);
-}
-
-/* Tamamlandı -> Yeşil */
-.form-select.status-tamamlandı {
-    background-color: rgba(38, 198, 133, 0.15);
-    color: #26C685;
-    border-color: rgba(38, 198, 133, 0.4);
-}
-
-/* İptal Edildi -> Kırmızı */
-.form-select.status-iptal-edildi {
-    background-color: rgba(234, 67, 53, 0.15);
-    color: #EA4335;
-    border-color: rgba(234, 67, 53, 0.4);
-}
-
-/* Progress Bar içindeki yüzde yazısı için stil */
-.progress-bar {
-    color: white;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-
-/* --- Sidebar Stilleri (Koyu Tema) --- */
-.sidebar-header { margin-bottom: 2rem; }
-.sidebar-header img { max-width: 120px; }
-.sidebar-nav { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
-.sidebar-nav a { display: flex; align-items: center; padding: 0.9rem 1rem; color: #a0a0c0; text-decoration: none; border-radius: 8px; margin-bottom: 0.5rem; transition: all 0.2s; }
-.sidebar-nav a:hover { background-color: rgba(74, 105, 255, 0.1); color: white; }
-.sidebar-nav a.active { background-color: var(--primary-blue); color: white; font-weight: 600; }
-.sidebar-nav i { margin-right: 1rem; font-size: 1.2rem; }
-.user-profile { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
+/* Kullanıcı Profili */
+.user-profile { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--sidebar-border); display: flex; justify-content: space-between; align-items: center; }
 .user-info { display: flex; align-items: center; }
-.user-info img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
-.user-details .username { font-weight: 600; color: white; }
-.user-details .role { font-size: 0.8rem; color: #a0a0c0; }
-.logout-btn { background: none; border: none; color: #a0a0c0; font-size: 1.2rem; cursor: pointer; padding: 5px; transition: color 0.2s; }
-.logout-btn:hover { color: white; }
+#user-avatar-sidebar { width: 45px; height: 45px; border-radius: 50%; margin-right: 15px; object-fit: cover; border: 2px solid var(--sidebar-border); }
+.user-details { display: flex; flex-direction: column; }
+.user-details .username { color: var(--sidebar-text-hover); font-weight: 600; font-size: 1rem; line-height: 1.2; }
+.user-details .role { color: var(--sidebar-text); font-size: 0.85rem; opacity: 0.8; }
+.logout-btn { background: none; border: none; color: var(--sidebar-text); font-size: 1.6rem; cursor: pointer; padding: 8px; border-radius: 8px; transition: all 0.2s ease; }
+.logout-btn:hover { color: var(--sidebar-text-hover); background-color: rgba(255, 255, 255, 0.15); }
 
-/* --- Ana İçerik (Açık Tema) --- */
+/* =============================================== */
+/* --- ANA İÇERİK ALANI --- */
+/* =============================================== */
+.main-content {
+    margin-left: 280px; 
+    padding: 30px;
+    transition: margin-left 0.3s ease;
+}
+
 .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .content-header h1 { font-size: 2rem; margin: 0; font-weight: 700; }
 .content-header p { color: var(--text-muted); margin: 0; }
-.btn-primary { background-color: var(--primary-blue); border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; color: white; }
-.btn-primary:hover { opacity: 0.9; background-color: var(--primary-blue); color: white; }
-.filters, .form-card, .table-container { background: var(--bg-content); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
-.filters { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+.filters { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; background: var(--bg-content); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
 .form-control, .form-select { border: 1px solid var(--border-color); color: var(--text-dark); border-radius: 8px; padding: 10px 15px; }
-.form-control:focus, .form-select:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 2px rgba(74, 105, 255, 0.2); }
+.form-control:focus, .form-select:focus { border-color: var(--theme-blue); box-shadow: 0 0 0 2px rgba(74, 105, 255, 0.3); }
+/* Yeni Sipariş Butonu */
+#new-order-btn {
+    background-color: var(--theme-blue);
+    border: none;
+}
 
-/* --- Sipariş Kartı Stilleri (Açık Tema) --- */
-.order-card { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; align-items: center; box-shadow: var(--shadow); }
-.order-header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
-.order-id { font-size: 1.2rem; font-weight: 600; }
-.order-status { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-.order-status.beklemede { background-color: rgba(255, 184, 0, 0.2); color: #c88c00; }
-.order-status.siparisaşamasında { background-color: rgba(74, 105, 255, 0.2); color: #4A69FF; }
-.order-status.tamamlandı { background-color: rgba(38, 198, 133, 0.2); color: #26C685; }
-.order-details span, .order-pricing span, .order-actions span { color: var(--text-muted); font-size: 0.9rem; }
-.order-details p, .order-pricing p { margin: 0; font-weight: 500; }
-.actions-buttons { display: flex; gap: 0.5rem; }
-.actions-buttons .btn { background: var(--bg-light); border: 1px solid var(--border-color); color: var(--text-dark); padding: 5px 10px; }
+/* =============================================== */
+/* --- SİPARİŞ KARTLARI --- */
+/* =============================================== */
+.order-card { background: var(--bg-content); border: 1px solid var(--border-color); border-left-width: 4px; border-left-style: solid; border-radius: 12px; box-shadow: var(--shadow); transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+.order-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+.order-card.border-beklemede { border-left-color: var(--primary-yellow); }
+.order-card.border-siparis-edildi { border-left-color: var(--theme-blue); }
+.order-card.border-siparis-tamamlandi { border-left-color: var(--primary-green); }
+.order-card.border-iptal-edildi { border-left-color: var(--primary-grey); }
+.order-card .progress { height: 8px; background-color: #e9ecef; }
+.order-card .progress-bar { background-color: var(--theme-blue); }
 
-/* --- Tablo ve Form Kartı (Açık Tema) --- */
-.form-card { margin-bottom: 2rem; }
-.table-container h3, .form-card h3 { margin-bottom: 1.5rem; font-weight: 600; }
-.table { color: var(--text-dark); }
+/* =============================================== */
+/* --- DURUM ETİKETLERİ (BADGE) --- */
+/* =============================================== */
+.order-status { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.order-status.beklemede { background-color: rgba(255, 193, 7, 0.2); color: #b98900; }
+.order-status.siparis-edildi { background-color: rgba(74, 105, 255, 0.2); color: var(--theme-blue); }
+.order-status.siparis-tamamlandi { background-color: rgba(38, 198, 133, 0.2); color: var(--primary-green); }
+.order-status.iptal-edildi { background-color: rgba(108, 117, 125, 0.2); color: var(--primary-grey); }
+
+/* =============================================== */
+/* --- TABLO GÖRÜNÜMÜ --- */
+/* =============================================== */
+.table-container { background: var(--bg-content); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+.table thead th { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); border: none; }
+.table tbody td { vertical-align: middle; }
 .table-hover tbody tr:hover { background-color: #f8f9fa; }
-.table thead th { background-color: #f8f9fa; border-bottom-width: 1px; }
-
-/* --- Modal Stilleri (Açık Tema) --- */
-.modal-content { background-color: var(--bg-content); border: 1px solid var(--border-color); border-radius: 15px; }
-.modal-header, .modal-footer { border-color: var(--border-color); }
-.modal-header .btn-close { filter: none; }
-.modal-body .form-control, .modal-body .form-select, .modal-body .form-control[type="file"] { background-color: var(--bg-light); }
-.modal-footer .btn-secondary { background-color: var(--bg-light); border-color: var(--border-color); color: var(--text-dark); }
